@@ -6,11 +6,17 @@ import { useAuthState } from "react-firebase-hooks/auth"
 import { useRouter } from "next/navigation"
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { toast } from "react-toastify";
+import { useSearchParams } from "react-router-dom";
 
 const Post = () => {
     // User State
     const [user, loading] = useAuthState(auth)
     const route = useRouter()
+    const [searchParams] = useSearchParams()
+    const routeData = {
+        id: searchParams.get("id"),
+        description: searchParams.get("description"),
+    }
 
     // Form State
     const [post, setPost] = useState({
@@ -65,7 +71,20 @@ const Post = () => {
 
         setPost({ description: "" })
         return route.push("/")
-    }    
+    }
+
+    // Check User
+    const checkUser = async () => {
+        if(loading) return
+        if(!user) return route.push("/auth/login")
+        if(routeData.id) {
+            setPost({ description: routeData.description || "" })
+        }
+    }
+
+    useEffect(() => {
+        checkUser()
+    }, [user, loading])
 
     return (
         <div className="my-20 p-12 shadow-lg rounded-lg max-w-md mx-auto">
@@ -76,7 +95,7 @@ const Post = () => {
                     <textarea 
                     name="description" 
                     id="description" 
-                    value={post.description} 
+                    value={post.description}
                     onChange={changeDescription}
                     className="bg-gray-800 h-48 w-full text-white rounded-lg p-2 text-small font-medium"
                     ></textarea>
