@@ -4,26 +4,27 @@ import React, { useEffect, useState } from "react"
 import { auth, db } from "../../utils/firebase"
 import { useAuthState } from "react-firebase-hooks/auth"
 import { useRouter } from "next/navigation"
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { addDoc, collection, doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { toast } from "react-toastify";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "next/navigation";
 
 const Post = () => {
-    // User State
-    const [user, loading] = useAuthState(auth)
-    const route = useRouter()
-    const [searchParams] = useSearchParams()
-    const routeData = {
-        id: searchParams.get("id"),
-        description: searchParams.get("description"),
-    }
-
     // Form State
     const [post, setPost] = useState({
+        id: "",
         description: "",
         // title: "",
         // content: "",
     })
+    // User State
+    const [user, loading] = useAuthState(auth)
+    const route = useRouter()
+    const searchParams = useSearchParams()
+    const routeData = {
+        id: searchParams?.get("id"),
+        description: searchParams?.get("description"),
+    }
+
 
     // Change Description
     const maxCharacters = 300
@@ -60,16 +61,27 @@ const Post = () => {
             // progress: undefined,
         })
 
-        const collectionRef = collection(db, "posts")
-        const docRef = await addDoc(collectionRef, {
-            ...post,
-            timeStamp: serverTimestamp(),
-            user: user?.uid,
-            avatar: user?.photoURL,
-            username: user?.displayName,
-        })
+        // Update the post
+        console.log(post)
+        if(post.id) { // ?.hasOwnProperty("id")
+            const docRef = doc(db, "posts", post.id)
+            const updatedPost = {...post, timestamp: serverTimestamp()}
+            await updateDoc(docRef, updatedPost)
+        }
+        // Create a new post
+        else {
+            const collectionRef = collection(db, "posts")
+            const docRef = await addDoc(collectionRef, {
+                ...post,
+                timeStamp: serverTimestamp(),
+                user: user?.uid,
+                avatar: user?.photoURL,
+                username: user?.displayName,
+            })
+        }
 
-        setPost({ description: "" })
+        toast.success(`Post ${post.id ? "updated" : "created"} successfully`)
+        setPost({ description: "", id: "" })
         return route.push("/")
     }
 
@@ -78,7 +90,7 @@ const Post = () => {
         if(loading) return
         if(!user) return route.push("/auth/login")
         if(routeData.id) {
-            setPost({ description: routeData.description || "" })
+            setPost({ description: routeData.description || "", id: routeData.id || "" })
         }
     }
 
@@ -89,7 +101,9 @@ const Post = () => {
     return (
         <div className="my-20 p-12 shadow-lg rounded-lg max-w-md mx-auto">
             <form onSubmit={submitPost}>
-                <h1 className="text-xl font-bold">Create a new post</h1>
+                <h1 className="text-xl font-bold">
+                    {post.id ? "Edit Post" : "Create a new post"} {/* Interesting! */}
+                </h1>
                 <div className="py-2">
                     <label htmlFor="description" className="text-lg font-medium py-2">Description</label>
                     <textarea 
