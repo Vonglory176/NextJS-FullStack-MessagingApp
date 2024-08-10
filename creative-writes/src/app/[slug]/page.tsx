@@ -21,8 +21,8 @@ export default function Details() {
     const routeData = {
         id: searchParams?.get("id") || "",
         description: searchParams?.get("description") || "",
-        avatar: '', //searchParams?.get("avatar"),
-        username: '', // searchParams?.get("username"),
+        avatar: searchParams?.get("avatar") || "",
+        username: searchParams?.get("username") || "",
         children: '',
     }
     const [message, setMessage] = useState<string>('')
