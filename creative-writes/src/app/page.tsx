@@ -5,6 +5,7 @@ import React, { useEffect, useState } from "react"
 import Message from "../components/Message"
 import { db } from "../utils/firebase"
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore"
+import Link from "next/link"
 // import RootLayout from "./layout"
 
 export default function Home() { // {Component, pageProps}: {Component: ComponentType, pageProps: any}
@@ -37,7 +38,11 @@ export default function Home() { // {Component, pageProps}: {Component: Componen
       <div className="my-12 text-lg font-medium">
         <h2>See what other people are saying</h2>
         {allPosts.map((post) => (
-          <Message key={post.id} {...post} />
+          <Message key={post.id} {...post}>
+            <Link href={{ pathname: `/${post.id}`, query: { ...post } }}> {/* post/${post.id} */}
+              <button>{post.comments?.length || 0} Comments</button>
+            </Link>
+          </Message>
         ))}
       </div>
     </div>
